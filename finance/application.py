@@ -40,7 +40,27 @@ db = SQL("sqlite:///finance.db")
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    allTransactions = db.execute("SELECT symbol FROM Stocks WHERE user_id=:userId", userId=session['user_id'])
+    stocks=[]
+    user = db.execute("SELECT * FROM users WHERE id=:userId;", userId=session["user_id"])
+    userName = user[0]["username"]
+    userBalance = float(user[0]["cash"])
+    total = userBalance
+    if allTransactions:
+        for transaction in allTransactions:
+            totalShares = db.execute("SELECT SUM(shares) FROM Stocks WHERE user_id=:userId AND symbol = :symbol", userId=session['user_id'], symbol=transaction['symbol'])
+            if totalShares[0]['SUM(shares)']>0:
+                stockInfo = lookup(transaction['symbol'])
+                stock = {}
+                stock['symbol'] = stockInfo['symbol']
+                stock['price'] = usd(stockInfo['price'])
+                stock['shares'] = totalShares[0]['SUM(shares)']
+                stock['total'] = usd(stock['shares'] * stockInfo['price'])
+                total+=stock['shares'] * stockInfo['price']
+                stocks.append(stock)
+        return render_template("index.html", stocks=stocks, userBalance=usd(userBalance), name = userName, userNetWorth = usd(total))
+    else:
+         return render_template("index.html", userBalance=usd(userBalance), name = userName, userNetWorth = usd(userBalance))
 
 
 @app.route("/buy", methods=["GET", "POST"])
