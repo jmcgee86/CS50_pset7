@@ -109,7 +109,25 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
-    return apology("TODO")
+    if request.method == "POST":
+        if not request.form.get("symbol"):
+            return apology("must enter a stock symbol")
+        symbol = request.form.get("symbol")
+        quote = lookup(symbol)
+        if quote:
+            return render_template("display.html", quote=quote, price=usd(quote["price"]))
+        else:
+            return apology("must enter valid stock symbol")
+
+    else:
+        return render_template("quote.html")
+
+@app.route("/display")
+@login_required
+def display():
+    """display quote"""
+    return render_template("display.html")
+
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -132,8 +150,6 @@ def register():
         # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
-
-
 
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
