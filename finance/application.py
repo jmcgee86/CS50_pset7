@@ -47,8 +47,31 @@ def index():
 @login_required
 def buy():
     """Buy shares of stock"""
-    return apology("TODO")
+    if request.method == "POST":
+        print("post buy execute")
+        if not request.form.get("stockSymbol"):
+            return apology("must enter a stock symbol")
+        elif not request.form.get("quant"):
+            return apology("must enter number of shares")
 
+        symbol = request.form.get("stockSymbol")
+        quote = lookup(symbol)
+
+        if not quote:
+            return apology("must enter valid stock symbol")
+
+        user = db.execute("SELECT cash FROM users WHERE id=:userId;", userId=session["user_id"])
+        userBalance = float(user[0]["cash"])
+        totalCost = quote["price"]*int(request.form.get("quant"))
+        if totalCost>userBalance:
+            return apology("not enough funds for purchase")
+        else:
+            db.execute("INSERT INTO stocks (symbol, shares, price, user_id) VALUES (:symbol, :shares, :price, :user_id);", symbol=symbol, shares=request.form.get("quant"), price=quote['price'], user_id=session["user_id"])
+            db.execute("UPDATE users SET cash=cash-:cost WHERE id=:userId;", cost=totalCost, userId=session["user_id"])
+            print("bought stocks")
+        return redirect("/")
+    else:
+        return render_template("buy.html")
 
 @app.route("/history")
 @login_required
