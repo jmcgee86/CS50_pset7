@@ -205,6 +205,19 @@ def register():
         elif not request.form.get("password") == request.form.get("confirmation"):
             return apology("password confirmation must match password")
 
+        password = request.form.get("password")
+        passwordWarning = []
+        if not any(char.isupper() for char in password):
+            passwordWarning.append('Password needs one upercase letter')
+        if not any(char.islower() for char in password):
+            passwordWarning.append('Password needs on lowercase letter')
+        if not any(char.isdigit() for char in password):
+            passwordWarning.append('password needs one number')
+        if len(password)<5:
+            passwordWarning.append('password must be at least five characters long')
+        if passwordWarning:
+            return apology (" ".join(passwordWarning))
+
         result = db.execute("INSERT INTO users (username, hash) VALUES(:username, :hash)", username=request.form.get("username"), hash = generate_password_hash(request.form.get("password")))
         if not result:
             return apology("username already exists")
