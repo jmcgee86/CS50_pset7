@@ -74,12 +74,12 @@ def buy():
     """Buy shares of stock"""
     if request.method == "POST":
         print("post buy execute")
-        if not request.form.get("stockSymbol"):
+        if not request.form.get("symbol"):
             return apology("must enter a stock symbol")
-        elif not request.form.get("quant"):
+        elif not request.form.get("shares"):
             return apology("must enter number of shares")
 
-        symbol = request.form.get("stockSymbol")
+        symbol = request.form.get("symbol")
         quote = lookup(symbol)
 
         if not quote:
@@ -87,11 +87,11 @@ def buy():
 
         user = db.execute("SELECT cash FROM users WHERE id=:userId;", userId=session["user_id"])
         userBalance = float(user[0]["cash"])
-        totalCost = quote["price"]*int(request.form.get("quant"))
+        totalCost = quote["price"]*int(request.form.get("shares"))
         if totalCost>userBalance:
             return apology("not enough funds for purchase")
         else:
-            db.execute("INSERT INTO stocks (symbol, shares, price, user_id) VALUES (:symbol, :shares, :price, :user_id);", symbol=symbol, shares=request.form.get("quant"), price=quote['price'], user_id=session["user_id"])
+            db.execute("INSERT INTO stocks (symbol, shares, price, user_id) VALUES (:symbol, :shares, :price, :user_id);", symbol=symbol, shares=request.form.get("shares"), price=quote['price'], user_id=session["user_id"])
             db.execute("UPDATE users SET cash=cash-:cost WHERE id=:userId;", cost=totalCost, userId=session["user_id"])
             print("bought stocks")
         return redirect("/")
@@ -199,24 +199,24 @@ def register():
     """Register user"""
     if request.method == "POST":
         if not request.form.get("username"):
-            return apology("username must be entered", 403)
+            return apology("username must be entered", 400)
         elif not request.form.get("password"):
-            return apology("must enter a password", 403)
+            return apology("must enter a password", 400)
         elif not request.form.get("password") == request.form.get("confirmation"):
             return apology("password confirmation must match password")
 
-        password = request.form.get("password")
-        passwordWarning = []
-        if not any(char.isupper() for char in password):
-            passwordWarning.append('Password needs one upercase letter')
-        if not any(char.islower() for char in password):
-            passwordWarning.append('Password needs on lowercase letter')
-        if not any(char.isdigit() for char in password):
-            passwordWarning.append('password needs one number')
-        if len(password)<5:
-            passwordWarning.append('password must be at least five characters long')
-        if passwordWarning:
-            return apology (" ".join(passwordWarning))
+        # password = request.form.get("password")
+        # passwordWarning = []
+        # if not any(char.isupper() for char in password):
+        #     passwordWarning.append('Password needs one upercase letter')
+        # if not any(char.islower() for char in password):
+        #     passwordWarning.append('Password needs on lowercase letter')
+        # if not any(char.isdigit() for char in password):
+        #     passwordWarning.append('password needs one number')
+        # if len(password)<5:
+        #     passwordWarning.append('password must be at least five characters long')
+        # if passwordWarning:
+        #     return apology (" ".join(passwordWarning))
 
         result = db.execute("INSERT INTO users (username, hash) VALUES(:username, :hash)", username=request.form.get("username"), hash = generate_password_hash(request.form.get("password")))
         if not result:
